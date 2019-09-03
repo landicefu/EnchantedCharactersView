@@ -7,6 +7,7 @@
         <attr name="textSize" format="dimension"/>
         <attr name="typeface" format="string"/>
         <attr name="fadeInForNonMovingChar" format="boolean"/>
+        <attr name="animationSteps" format="integer"/>
     </declare-styleable>
 
     <declare-styleable name="EnchantedCharactersViewTheme">

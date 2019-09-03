@@ -12,8 +12,8 @@ import tw.lifehackers.widget.enchantedcharacters.R
 class EnchantedCharactersView : View {
 
     companion object {
-        private val defaultTextColor = Color.parseColor("#FF000000")
-        private const val NUM_STEPS = 30
+        private val DEFAULT_TEXT_COLOR = Color.parseColor("#FF000000")
+        private const val DEFAULT_NUM_STEPS = 50
     }
 
     private val defaultTextSize =
@@ -21,7 +21,7 @@ class EnchantedCharactersView : View {
 
     private var textPaint: TextPaint = TextPaint()
 
-    var textColor: Int = defaultTextColor
+    var textColor: Int = DEFAULT_TEXT_COLOR
         set(value) {
             field = value
             updateTextPaint()
@@ -48,6 +48,14 @@ class EnchantedCharactersView : View {
 
     var fadeInForNonMovingChar: Boolean = false
 
+    var animationSteps: Int = DEFAULT_NUM_STEPS
+        set(value) {
+            field = value
+            if (value < 2) {
+                throw IllegalArgumentException("animationSteps should be at least 2")
+            }
+        }
+
     private var isAtMost: Boolean = false
     private val uiHandler = Handler()
 
@@ -65,12 +73,13 @@ class EnchantedCharactersView : View {
 
     private fun init(attr: AttributeSet?, defStyleAttr: Int) {
         val typedArr = context.obtainStyledAttributes(attr, R.styleable.EnchantedCharactersView, defStyleAttr, 0)
-        textColor = typedArr.getColor(R.styleable.EnchantedCharactersView_textColor, defaultTextColor)
+        textColor = typedArr.getColor(R.styleable.EnchantedCharactersView_textColor, DEFAULT_TEXT_COLOR)
         val textSizeFromAttr = typedArr.getDimension(R.styleable.EnchantedCharactersView_textSize, -1f)
         textSize = if (textSizeFromAttr < 0) defaultTextSize else textSizeFromAttr
         typeface = typedArr.getString(R.styleable.EnchantedCharactersView_typeface)
         text = typedArr.getString(R.styleable.EnchantedCharactersView_text) ?: ""
         fadeInForNonMovingChar = typedArr.getBoolean(R.styleable.EnchantedCharactersView_fadeInForNonMovingChar, false)
+        animationSteps = typedArr.getInt(R.styleable.EnchantedCharactersView_animationSteps, DEFAULT_NUM_STEPS)
         typedArr.recycle()
 
         setLayerType(LAYER_TYPE_HARDWARE, null)
@@ -108,7 +117,7 @@ class EnchantedCharactersView : View {
 
     private fun onTextChanged(oldStr: String, newStr: String) {
         uiHandler.removeCallbacks(invalidateRunnable)
-        intermediateState = IntermediateState(oldStr, newStr, NUM_STEPS, textColor, textPaint, fadeInForNonMovingChar)
+        intermediateState = IntermediateState(oldStr, newStr, animationSteps, textColor, textPaint, fadeInForNonMovingChar)
         requestLayout()
     }
 
