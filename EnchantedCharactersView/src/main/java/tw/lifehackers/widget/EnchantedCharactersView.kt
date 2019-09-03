@@ -2,6 +2,7 @@ package tw.lifehackers.widget
 
 import android.content.Context
 import android.graphics.*
+import android.os.Handler
 import android.text.TextPaint
 import android.util.AttributeSet
 import android.util.TypedValue
@@ -44,6 +45,8 @@ class EnchantedCharactersView : View {
             field = value
             updateTextPaint()
         }
+
+    private val uiHandler = Handler()
 
     constructor(context: Context) : super(context) {
         init(null, 0)
@@ -91,23 +94,16 @@ class EnchantedCharactersView : View {
         }
         setMeasuredDimension(
             resolveSizeAndState(textWidth.toInt() + paddingLeft + paddingRight, widthMeasureSpec, 0),
-            resolveSizeAndState(textPaint.height+ paddingBottom + paddingTop, heightMeasureSpec, 0)
+            resolveSizeAndState(textPaint.height + paddingBottom + paddingTop, heightMeasureSpec, 0)
         )
     }
 
-    private var scheduledTextSet: IntermediateState? = null
     private var intermediateState: IntermediateState? = null
 
     private fun onTextChanged(oldStr: String, newStr: String) {
-        val intermediateState = intermediateState
-        val newState = IntermediateState(oldStr, newStr, NUM_STEPS, textPaint)
-        if (intermediateState == null) {
-            this@EnchantedCharactersView.intermediateState = newState
-            scheduledTextSet = null
-            requestLayout()
-        } else {
-            scheduledTextSet = newState
-        }
+        uiHandler.removeCallbacks(invalidateRunnable)
+        intermediateState = IntermediateState(oldStr, newStr, NUM_STEPS, textPaint)
+        requestLayout()
     }
 
     private val invalidateRunnable = Runnable { invalidate() }
@@ -120,14 +116,8 @@ class EnchantedCharactersView : View {
             canvas.drawText(text, offsetX, offsetY, textPaint)
         } else {
             intermediateState.drawStep(canvas, paddingLeft, offsetY)
-            if (intermediateState.isFinalStep()) {
-                this@EnchantedCharactersView.intermediateState = scheduledTextSet
-                if (scheduledTextSet != null) {
-                    scheduledTextSet = null
-                    requestLayout()
-                }
-            } else {
-                post(invalidateRunnable)
+            if (!intermediateState.isFinalStep()) {
+                uiHandler.post(invalidateRunnable)
             }
         }
     }
@@ -204,4 +194,5 @@ private class IntermediateState(
     )
 }
 
-private fun linearInterpolate(oldValue: Float, newValue: Float, percentage: Float) = oldValue + (newValue - oldValue) * percentage
+private fun linearInterpolate(oldValue: Float, newValue: Float, percentage: Float) =
+    oldValue + (newValue - oldValue) * percentage
