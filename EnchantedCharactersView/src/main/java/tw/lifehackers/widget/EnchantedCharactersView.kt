@@ -12,8 +12,7 @@ class EnchantedCharactersView : View {
 
     companion object {
         private val defaultTextColor = Color.parseColor("#FF000000")
-        private const val duration: Int = 1
-        private const val steps: Int = 30
+        private const val NUM_STEPS = 30
     }
 
     private val defaultTextSize =
@@ -21,26 +20,26 @@ class EnchantedCharactersView : View {
 
     private var textPaint: TextPaint = TextPaint()
 
-    private var textColor: Int = defaultTextColor
+    var textColor: Int = defaultTextColor
         set(value) {
             field = value
             updateTextPaint()
         }
 
-    private var textSize: Float = defaultTextSize
+    var textSize: Float = defaultTextSize
         set(value) {
             field = value
             updateTextPaint()
         }
 
-    private var text: String = ""
+    var text: String = ""
         set(value) {
             if (field == value) return
             onTextChanged(field, value)
             field = value
         }
 
-    private var typeface: String? = null
+    var typeface: String? = null
         set(value) {
             field = value
             updateTextPaint()
@@ -68,17 +67,7 @@ class EnchantedCharactersView : View {
         typedArr.recycle()
 
         setLayerType(LAYER_TYPE_HARDWARE, null)
-    }
-
-    override fun onDraw(canvas: Canvas) {
-        val textBounds = textPaint.getTextBounds(text)
-        var offsetX = paddingLeft.toFloat()
-        val offsetY = paddingTop.toFloat() + textBounds.height()
-        text.forEach {
-            val charAsStr = it.toString()
-            canvas.drawText(charAsStr, 0, 1, offsetX, offsetY, textPaint)
-            offsetX += textPaint.measureText(charAsStr)
-        }
+        intermediateState = null
     }
 
     private fun updateTextPaint() {
@@ -94,23 +83,125 @@ class EnchantedCharactersView : View {
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val textBounds = textPaint.getTextBounds(text)
-        val additionalBottomPadding = textPaint.fontMetricsInt.run { bottom - baseline }
+        val intermediateState = intermediateState
+        val textWidth = if (intermediateState == null) {
+            textPaint.measureText(text)
+        } else {
+            maxOf(textPaint.measureText(intermediateState.oldStr), textPaint.measureText(intermediateState.newStr))
+        }
         setMeasuredDimension(
-            resolveSizeAndState(textBounds.width() + paddingLeft + paddingRight, widthMeasureSpec, 0),
-            resolveSizeAndState(textBounds.height() + paddingBottom + paddingTop + additionalBottomPadding, heightMeasureSpec, 0)
+            resolveSizeAndState(textWidth.toInt() + paddingLeft + paddingRight, widthMeasureSpec, 0),
+            resolveSizeAndState(textPaint.height+ paddingBottom + paddingTop, heightMeasureSpec, 0)
         )
     }
 
-    private fun onTextChanged(field: CharSequence, value: CharSequence) {
-        requestLayout()
+    private var scheduledTextSet: IntermediateState? = null
+    private var intermediateState: IntermediateState? = null
+
+    private fun onTextChanged(oldStr: String, newStr: String) {
+        val intermediateState = intermediateState
+        val newState = IntermediateState(oldStr, newStr, NUM_STEPS, textPaint)
+        if (intermediateState == null) {
+            this@EnchantedCharactersView.intermediateState = newState
+            scheduledTextSet = null
+            requestLayout()
+        } else {
+            scheduledTextSet = newState
+        }
+    }
+
+    private val invalidateRunnable = Runnable { invalidate() }
+
+    override fun onDraw(canvas: Canvas) {
+        val intermediateState = intermediateState
+        val offsetY = paddingTop.toFloat() + textPaint.height - textPaint.fontMetrics.bottom
+        if (intermediateState == null) {
+            val offsetX = paddingLeft.toFloat()
+            canvas.drawText(text, offsetX, offsetY, textPaint)
+        } else {
+            intermediateState.drawStep(canvas, paddingLeft, offsetY)
+            if (intermediateState.isFinalStep()) {
+                this@EnchantedCharactersView.intermediateState = scheduledTextSet
+                if (scheduledTextSet != null) {
+                    scheduledTextSet = null
+                    requestLayout()
+                }
+            } else {
+                post(invalidateRunnable)
+            }
+        }
     }
 }
 
-private fun TextPaint.getTextBounds(text: String): Rect {
-    val rect = Rect()
-    getTextBounds(text, 0, text.length, rect)
-    rect.left = 0
-    rect.right = measureText(text).toInt()
-    return rect
+private val TextPaint.height: Int get() = fontMetricsInt.run { bottom - top }
+
+private fun TextPaint.measureChar(char: Char) = measureText(char.toString())
+
+private class IntermediateState(
+    val oldStr: String,
+    val newStr: String,
+    val numberOfSteps: Int,
+    val textPaint: TextPaint
+) {
+    private var currentStep = 0
+
+    private val showIndexInNewString = mutableListOf<Int>()
+    private val shiftingCharList = mutableListOf<ShiftingChar>()
+
+    private val oldStrOffset = mutableListOf<Float>()
+    private val newStrOffset = mutableListOf<Float>()
+
+    init {
+        val oldIndexedCharList = oldStr.mapIndexed(::IndexedChar).toMutableList()
+
+        var accuOffset = 0f
+        oldStr.forEach { char ->
+            oldStrOffset.add(accuOffset)
+            accuOffset += textPaint.measureChar(char)
+        }
+
+        accuOffset = 0f
+        newStr.forEach { char ->
+            newStrOffset.add(accuOffset)
+            accuOffset += textPaint.measureChar(char)
+        }
+
+        newStr.forEachIndexed { index, char ->
+            val availableIndex = oldIndexedCharList.indexOfFirst { it.char == char }
+            if (availableIndex == -1) {
+                showIndexInNewString.add(index)
+            } else {
+                val oldIndexedChar = oldIndexedCharList[availableIndex]
+                shiftingCharList.add(ShiftingChar(char, oldStrOffset[oldIndexedChar.index], newStrOffset[index]))
+                oldIndexedCharList.removeAt(availableIndex)
+            }
+        }
+    }
+
+    fun drawStep(canvas: Canvas, paddingLeft: Int, offsetY: Float) {
+        for (index in showIndexInNewString) {
+            canvas.drawText(newStr[index].toString(), paddingLeft.toFloat() + newStrOffset[index], offsetY, textPaint)
+        }
+
+        val percentage = (++currentStep).toFloat() / numberOfSteps
+        for (shiftingChar in shiftingCharList) {
+            val offsetX = paddingLeft + linearInterpolate(shiftingChar.startOffset, shiftingChar.endOffset, percentage)
+            canvas.drawText(shiftingChar.char.toString(), offsetX, offsetY, textPaint)
+        }
+    }
+
+    fun isFinalStep() = currentStep == numberOfSteps
+
+    private data class IndexedChar(
+        val index: Int,
+        val char: Char
+    )
+
+    private data class ShiftingChar(
+        val char: Char,
+        val startOffset: Float,
+        val endOffset: Float
+    )
 }
+
+private fun linearInterpolate(oldValue: Float, newValue: Float, percentage: Float) = oldValue + (newValue - oldValue) * percentage

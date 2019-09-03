@@ -7,17 +7,25 @@
         tools:context=".MainActivity">
 
     <tw.lifehackers.widget.EnchantedCharactersView
+            android:id="@+id/enchantedCharactersView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingLeft="4dp"
             android:paddingRight="4dp"
             android:background="@color/colorPrimary"
-            app:text="Landicey"
+            app:text="January"
             app:textColor="@android:color/black"
             app:textSize="32sp"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"/>
+            app:layout_constraintLeft_toLeftOf="parent"/>
+
+    <Button
+            android:id="@+id/buttonNext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Next"
+            app:layout_constraintTop_toBottomOf="@id/enchantedCharactersView"
+            app:layout_constraintLeft_toLeftOf="parent"/>
 
 </android.support.constraint.ConstraintLayout>
