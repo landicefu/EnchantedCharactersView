@@ -85,7 +85,8 @@ class EnchantedCharactersView : View {
         }
         textPaint.color = textColor
         textPaint.textSize = textSize
-        textPaint.typeface = if (typeface == null) null else Typeface.createFromAsset(context.assets, typeface)
+        textPaint.typeface = if (typeface == null) null
+        else tryOrNull { Typeface.createFromAsset(context.assets, typeface) }
         invalidate()
     }
 
@@ -133,6 +134,12 @@ class EnchantedCharactersView : View {
             }
         }
     }
+}
+
+private fun <T> tryOrNull(block: () -> T) = try {
+    block()
+} catch (e: Exception) {
+    null
 }
 
 private val TextPaint.height: Int get() = fontMetricsInt.run { bottom - top }

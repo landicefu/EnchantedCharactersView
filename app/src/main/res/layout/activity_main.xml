@@ -14,6 +14,7 @@
             android:paddingRight="4dp"
             android:background="@color/colorPrimary"
             app:fadeInForNonMovingChar="true"
+            app:typeface="Adlanta.otf"
             app:text="January"
             app:textColor="@android:color/black"
             app:textSize="32sp"
