@@ -102,7 +102,7 @@ class EnchantedCharactersView : View {
 
     private fun onTextChanged(oldStr: String, newStr: String) {
         uiHandler.removeCallbacks(invalidateRunnable)
-        intermediateState = IntermediateState(oldStr, newStr, NUM_STEPS, textPaint)
+        intermediateState = IntermediateState(oldStr, newStr, NUM_STEPS, textColor, textPaint)
         requestLayout()
     }
 
@@ -113,6 +113,7 @@ class EnchantedCharactersView : View {
         val offsetY = paddingTop.toFloat() + textPaint.height - textPaint.fontMetrics.bottom
         if (intermediateState == null) {
             val offsetX = paddingLeft.toFloat()
+            textPaint.color = textColor
             canvas.drawText(text, offsetX, offsetY, textPaint)
         } else {
             intermediateState.drawStep(canvas, paddingLeft, offsetY)
@@ -131,6 +132,7 @@ private class IntermediateState(
     val oldStr: String,
     val newStr: String,
     val numberOfSteps: Int,
+    val textColor: Int,
     val textPaint: TextPaint
 ) {
     private var currentStep = 0
@@ -169,11 +171,14 @@ private class IntermediateState(
     }
 
     fun drawStep(canvas: Canvas, paddingLeft: Int, offsetY: Float) {
+        val percentage = (++currentStep).toFloat() / numberOfSteps
+
+        textPaint.color = textColor and 0x00FFFFFF or (Color.alpha(textColor) * percentage).toInt().shl(24)
         for (index in showIndexInNewString) {
             canvas.drawText(newStr[index].toString(), paddingLeft.toFloat() + newStrOffset[index], offsetY, textPaint)
         }
 
-        val percentage = (++currentStep).toFloat() / numberOfSteps
+        textPaint.color = textColor
         for (shiftingChar in shiftingCharList) {
             val offsetX = paddingLeft + linearInterpolate(shiftingChar.startOffset, shiftingChar.endOffset, percentage)
             canvas.drawText(shiftingChar.char.toString(), offsetX, offsetY, textPaint)
