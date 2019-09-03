@@ -46,6 +46,9 @@ class EnchantedCharactersView : View {
             updateTextPaint()
         }
 
+    var fadeInForNonMovingChar: Boolean = false
+
+    private var isAtMost: Boolean = false
     private val uiHandler = Handler()
 
     constructor(context: Context) : super(context) {
@@ -67,6 +70,7 @@ class EnchantedCharactersView : View {
         textSize = if (textSizeFromAttr < 0) defaultTextSize else textSizeFromAttr
         typeface = typedArr.getString(R.styleable.EnchantedCharactersView_typeface)
         text = typedArr.getString(R.styleable.EnchantedCharactersView_text) ?: ""
+        fadeInForNonMovingChar = typedArr.getBoolean(R.styleable.EnchantedCharactersView_fadeInForNonMovingChar, false)
         typedArr.recycle()
 
         setLayerType(LAYER_TYPE_HARDWARE, null)
@@ -86,6 +90,7 @@ class EnchantedCharactersView : View {
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        isAtMost = MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.AT_MOST
         val intermediateState = intermediateState
         val textWidth = if (intermediateState == null) {
             textPaint.measureText(text)
@@ -102,7 +107,7 @@ class EnchantedCharactersView : View {
 
     private fun onTextChanged(oldStr: String, newStr: String) {
         uiHandler.removeCallbacks(invalidateRunnable)
-        intermediateState = IntermediateState(oldStr, newStr, NUM_STEPS, textColor, textPaint)
+        intermediateState = IntermediateState(oldStr, newStr, NUM_STEPS, textColor, textPaint, fadeInForNonMovingChar)
         requestLayout()
     }
 
@@ -119,6 +124,12 @@ class EnchantedCharactersView : View {
             intermediateState.drawStep(canvas, paddingLeft, offsetY)
             if (!intermediateState.isFinalStep()) {
                 uiHandler.post(invalidateRunnable)
+            } else {
+                this@EnchantedCharactersView.intermediateState = null
+                if (isAtMost) {
+                    // change the width to new string
+                    requestLayout()
+                }
             }
         }
     }
@@ -133,7 +144,8 @@ private class IntermediateState(
     val newStr: String,
     val numberOfSteps: Int,
     val textColor: Int,
-    val textPaint: TextPaint
+    val textPaint: TextPaint,
+    val fadeIn: Boolean
 ) {
     private var currentStep = 0
 
@@ -173,9 +185,14 @@ private class IntermediateState(
     fun drawStep(canvas: Canvas, paddingLeft: Int, offsetY: Float) {
         val percentage = (++currentStep).toFloat() / numberOfSteps
 
-        textPaint.color = textColor and 0x00FFFFFF or (Color.alpha(textColor) * percentage).toInt().shl(24)
+        if (fadeIn) {
+            textPaint.color = textColor and 0x00FFFFFF or (Color.alpha(textColor) * percentage).toInt().shl(24)
+        }
+
         for (index in showIndexInNewString) {
-            canvas.drawText(newStr[index].toString(), paddingLeft.toFloat() + newStrOffset[index], offsetY, textPaint)
+            canvas.drawText(
+                newStr[index].toString(), paddingLeft.toFloat() + newStrOffset[index], offsetY, textPaint
+            )
         }
 
         textPaint.color = textColor

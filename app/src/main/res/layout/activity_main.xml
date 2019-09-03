@@ -13,6 +13,7 @@
             android:paddingLeft="4dp"
             android:paddingRight="4dp"
             android:background="@color/colorPrimary"
+            app:fadeInForNonMovingChar="true"
             app:text="January"
             app:textColor="@android:color/black"
             app:textSize="32sp"
