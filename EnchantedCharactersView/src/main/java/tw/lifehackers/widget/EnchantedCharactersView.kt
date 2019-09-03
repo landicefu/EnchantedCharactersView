@@ -138,11 +138,15 @@ class EnchantedCharactersView : View {
     }
 
     @SuppressLint("RtlHardcoded")
-    private fun getOffsetX(str: String): Float {
+    private fun getOffsetX(str: String, oldStr: String? = null): Float {
         val absGravity = getAbsoluteGravity(gravity, layoutDirection)
         val contentWidth = textPaint.measureText(str)
-        val containerWidth = width - paddingLeft - paddingRight
-        Log.d("Landice", "problematic width = $width")
+        val containerWidth = if (isAtMost) {
+            // to fix a bug to get width before layout with new size
+            maxOf(contentWidth, oldStr?.let { textPaint.measureText(it) } ?: 0f).toInt()
+        } else {
+            width - paddingLeft - paddingRight
+        }
         return when (absGravity and 0xF) {
             RIGHT -> width - contentWidth - paddingRight
             CENTER_HORIZONTAL -> paddingLeft.toFloat() + (containerWidth - contentWidth) / 2
@@ -158,7 +162,7 @@ class EnchantedCharactersView : View {
             textColor,
             textPaint,
             fadeInForNonMovingChar,
-            getOffsetX(newStr),
+            getOffsetX(newStr, oldStr),
             getOffsetY()
         )
         requestLayout()
