@@ -1,11 +1,14 @@
 package tw.lifehackers.widget
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
 import android.os.Handler
 import android.text.TextPaint
 import android.util.AttributeSet
+import android.util.Log
 import android.util.TypedValue
+import android.view.Gravity.*
 import android.view.View
 import tw.lifehackers.widget.enchantedcharacters.R
 
@@ -14,6 +17,7 @@ class EnchantedCharactersView : View {
     companion object {
         private val DEFAULT_TEXT_COLOR = Color.parseColor("#FF000000")
         private const val DEFAULT_NUM_STEPS = 50
+        private const val DEFAULT_GRAVITY = START
     }
 
     private val defaultTextSize =
@@ -56,6 +60,12 @@ class EnchantedCharactersView : View {
             }
         }
 
+    var gravity: Int = DEFAULT_GRAVITY
+        set(value) {
+            field = value
+            invalidate()
+        }
+
     private var isAtMost: Boolean = false
     private val uiHandler = Handler()
 
@@ -80,6 +90,7 @@ class EnchantedCharactersView : View {
         text = typedArr.getString(R.styleable.EnchantedCharactersView_text) ?: ""
         fadeInForNonMovingChar = typedArr.getBoolean(R.styleable.EnchantedCharactersView_fadeInForNonMovingChar, false)
         animationSteps = typedArr.getInt(R.styleable.EnchantedCharactersView_animationSteps, DEFAULT_NUM_STEPS)
+        gravity = typedArr.getInt(R.styleable.EnchantedCharactersView_gravity, DEFAULT_GRAVITY)
         typedArr.recycle()
 
         setLayerType(LAYER_TYPE_HARDWARE, null)
@@ -111,13 +122,45 @@ class EnchantedCharactersView : View {
             resolveSizeAndState(textWidth.toInt() + paddingLeft + paddingRight, widthMeasureSpec, 0),
             resolveSizeAndState(textPaint.height + paddingBottom + paddingTop, heightMeasureSpec, 0)
         )
+        Log.d("Landice", "measured width = ${textWidth.toInt() + paddingLeft + paddingRight}")
     }
 
     private var intermediateState: IntermediateState? = null
 
+    private fun getOffsetY(): Float {
+        val contentHeight = textPaint.height
+        val containerHeight = height - paddingTop - paddingBottom
+        return when (gravity and 0xF0) {
+            BOTTOM -> height - paddingBottom.toFloat()
+            CENTER_VERTICAL -> paddingTop.toFloat() + (containerHeight + contentHeight) / 2
+            else -> paddingTop.toFloat() + contentHeight
+        } - textPaint.fontMetrics.bottom
+    }
+
+    @SuppressLint("RtlHardcoded")
+    private fun getOffsetX(str: String): Float {
+        val absGravity = getAbsoluteGravity(gravity, layoutDirection)
+        val contentWidth = textPaint.measureText(str)
+        val containerWidth = width - paddingLeft - paddingRight
+        Log.d("Landice", "problematic width = $width")
+        return when (absGravity and 0xF) {
+            RIGHT -> width - contentWidth - paddingRight
+            CENTER_HORIZONTAL -> paddingLeft.toFloat() + (containerWidth - contentWidth) / 2
+            else -> paddingLeft.toFloat()
+        }
+    }
+
     private fun onTextChanged(oldStr: String, newStr: String) {
         uiHandler.removeCallbacks(invalidateRunnable)
-        intermediateState = IntermediateState(oldStr, newStr, animationSteps, textColor, textPaint, fadeInForNonMovingChar)
+        intermediateState = IntermediateState(
+            oldStr, newStr,
+            animationSteps,
+            textColor,
+            textPaint,
+            fadeInForNonMovingChar,
+            getOffsetX(newStr),
+            getOffsetY()
+        )
         requestLayout()
     }
 
@@ -125,13 +168,12 @@ class EnchantedCharactersView : View {
 
     override fun onDraw(canvas: Canvas) {
         val intermediateState = intermediateState
-        val offsetY = paddingTop.toFloat() + textPaint.height - textPaint.fontMetrics.bottom
+
         if (intermediateState == null) {
-            val offsetX = paddingLeft.toFloat()
             textPaint.color = textColor
-            canvas.drawText(text, offsetX, offsetY, textPaint)
+            canvas.drawText(text, getOffsetX(text), getOffsetY(), textPaint)
         } else {
-            intermediateState.drawStep(canvas, paddingLeft, offsetY)
+            intermediateState.drawStep(canvas)
             if (!intermediateState.isFinalStep()) {
                 uiHandler.post(invalidateRunnable)
             } else {
@@ -161,7 +203,9 @@ private class IntermediateState(
     val numberOfSteps: Int,
     val textColor: Int,
     val textPaint: TextPaint,
-    val fadeIn: Boolean
+    val fadeIn: Boolean,
+    val offsetX: Float,
+    val offsetY: Float
 ) {
     private var currentStep = 0
 
@@ -198,7 +242,7 @@ private class IntermediateState(
         }
     }
 
-    fun drawStep(canvas: Canvas, paddingLeft: Int, offsetY: Float) {
+    fun drawStep(canvas: Canvas) {
         val percentage = (++currentStep).toFloat() / numberOfSteps
 
         if (fadeIn) {
@@ -207,13 +251,13 @@ private class IntermediateState(
 
         for (index in showIndexInNewString) {
             canvas.drawText(
-                newStr[index].toString(), paddingLeft.toFloat() + newStrOffset[index], offsetY, textPaint
+                newStr[index].toString(), offsetX + newStrOffset[index], offsetY, textPaint
             )
         }
 
         textPaint.color = textColor
         for (shiftingChar in shiftingCharList) {
-            val offsetX = paddingLeft + linearInterpolate(shiftingChar.startOffset, shiftingChar.endOffset, percentage)
+            val offsetX = offsetX + linearInterpolate(shiftingChar.startOffset, shiftingChar.endOffset, percentage)
             canvas.drawText(shiftingChar.char.toString(), offsetX, offsetY, textPaint)
         }
     }

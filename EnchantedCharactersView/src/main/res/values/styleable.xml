@@ -8,6 +8,17 @@
         <attr name="typeface" format="string"/>
         <attr name="fadeInForNonMovingChar" format="boolean"/>
         <attr name="animationSteps" format="integer"/>
+        <attr name="gravity">
+            <flag name="bottom" value="80"/>
+            <flag name="top" value="48"/>
+            <flag name="left" value="3"/>
+            <flag name="right" value="5"/>
+            <flag name="start" value="800003"/>
+            <flag name="end" value="800005"/>
+            <flag name="center" value="17"/>
+            <flag name="center_horizontal" value="1"/>
+            <flag name="center_vertical" value="16"/>
+        </attr>
     </declare-styleable>
 
     <declare-styleable name="EnchantedCharactersViewTheme">
