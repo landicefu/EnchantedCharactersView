@@ -11,7 +11,6 @@ import tw.lifehackers.widget.enchantedcharacters.R
 class EnchantedCharactersView : View {
 
     companion object {
-        private val TAG = EnchantedCharactersView::class.java.simpleName
         private val defaultTextColor = Color.parseColor("#FF000000")
         private const val duration: Int = 1
         private const val steps: Int = 30
@@ -73,7 +72,13 @@ class EnchantedCharactersView : View {
 
     override fun onDraw(canvas: Canvas) {
         val textBounds = textPaint.getTextBounds(text)
-        canvas.drawText(text, 0f, textBounds.height().toFloat(), textPaint)
+        var offsetX = paddingLeft.toFloat()
+        val offsetY = paddingTop.toFloat() + textBounds.height()
+        text.forEach {
+            val charAsStr = it.toString()
+            canvas.drawText(charAsStr, 0, 1, offsetX, offsetY, textPaint)
+            offsetX += textPaint.measureText(charAsStr)
+        }
     }
 
     private fun updateTextPaint() {
@@ -90,12 +95,12 @@ class EnchantedCharactersView : View {
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val textBounds = textPaint.getTextBounds(text)
+        val additionalBottomPadding = textPaint.fontMetricsInt.run { bottom - baseline }
         setMeasuredDimension(
-            resolveSizeAndState(textBounds.width(), widthMeasureSpec, 0),
-            resolveSizeAndState(textBounds.height(), heightMeasureSpec, 0)
+            resolveSizeAndState(textBounds.width() + paddingLeft + paddingRight, widthMeasureSpec, 0),
+            resolveSizeAndState(textBounds.height() + paddingBottom + paddingTop + additionalBottomPadding, heightMeasureSpec, 0)
         )
     }
-
 
     private fun onTextChanged(field: CharSequence, value: CharSequence) {
         requestLayout()
