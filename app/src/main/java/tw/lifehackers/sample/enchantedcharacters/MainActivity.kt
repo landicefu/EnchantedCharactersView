@@ -30,6 +30,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         buttonNext.setOnClickListener {
             enchantedCharactersView.text = MONTHS[++index % MONTHS.size]
+            enchantedCharactersView2.text = MONTHS[index % MONTHS.size]
         }
     }
 }
