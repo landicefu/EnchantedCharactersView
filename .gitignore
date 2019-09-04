@@ -3,6 +3,7 @@
 .DS_Store
 /build
 /captures
+/publish
 .externalNativeBuild
 local.properties
 /.idea/caches
