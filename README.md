@@ -8,6 +8,12 @@ V1.0 has been released.
 - You can now use interpolators to make the animation more vivid.
 
 ## Usage
+Add dependency to your gradle:
+```
+implementation 'tw.lifehackers:enchantedcharactersview:1.0'
+```
+
+Add the view to your xml file and change the text in your code.
 ```xml
     <tw.lifehackers.widget.EnchantedCharactersView
             android:id="@+id/enchantedCharactersView"
