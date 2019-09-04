@@ -3,6 +3,7 @@ package tw.lifehackers.widget
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
+import android.os.Build
 import android.os.Handler
 import android.text.TextPaint
 import android.util.AttributeSet
@@ -10,6 +11,7 @@ import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity.*
 import android.view.View
+import android.view.animation.Interpolator
 import tw.lifehackers.widget.enchantedcharacters.R
 
 class EnchantedCharactersView : View {
@@ -65,6 +67,8 @@ class EnchantedCharactersView : View {
             field = value
             invalidate()
         }
+
+    var interpolator: Interpolator? = null
 
     private var isAtMost: Boolean = false
     private val uiHandler = Handler()
@@ -139,6 +143,10 @@ class EnchantedCharactersView : View {
 
     @SuppressLint("RtlHardcoded")
     private fun getOffsetX(str: String, oldStr: String? = null): Float {
+        val layoutDirection = if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            layoutDirection
+        } else 0 // LayoutDirection.LTR
+
         val absGravity = getAbsoluteGravity(gravity, layoutDirection)
         val contentWidth = textPaint.measureText(str)
         val containerWidth = if (isAtMost) {
@@ -163,7 +171,8 @@ class EnchantedCharactersView : View {
             textPaint,
             fadeInForNonMovingChar,
             getOffsetX(newStr, oldStr),
-            getOffsetY()
+            getOffsetY(),
+            interpolator
         )
         requestLayout()
     }
@@ -209,7 +218,8 @@ private class IntermediateState(
     val textPaint: TextPaint,
     val fadeIn: Boolean,
     val offsetX: Float,
-    val offsetY: Float
+    val offsetY: Float,
+    val interpolator: Interpolator? = null
 ) {
     private var currentStep = 0
 
@@ -248,6 +258,7 @@ private class IntermediateState(
 
     fun drawStep(canvas: Canvas) {
         val percentage = (++currentStep).toFloat() / numberOfSteps
+        val interpolatedPercentage = interpolator?.getInterpolation(percentage) ?: percentage
 
         if (fadeIn) {
             textPaint.color = textColor and 0x00FFFFFF or (Color.alpha(textColor) * percentage).toInt().shl(24)
@@ -261,10 +272,17 @@ private class IntermediateState(
 
         textPaint.color = textColor
         for (shiftingChar in shiftingCharList) {
-            val offsetX = offsetX + linearInterpolate(shiftingChar.startOffset, shiftingChar.endOffset, percentage)
+            val offsetX = offsetX + linearInterpolate(
+                shiftingChar.startOffset,
+                shiftingChar.endOffset,
+                interpolatedPercentage
+            )
             canvas.drawText(shiftingChar.char.toString(), offsetX, offsetY, textPaint)
         }
     }
+
+    private fun linearInterpolate(oldValue: Float, newValue: Float, percentage: Float) =
+        oldValue + (newValue - oldValue) * percentage
 
     fun isFinalStep() = currentStep == numberOfSteps
 
@@ -279,6 +297,3 @@ private class IntermediateState(
         val endOffset: Float
     )
 }
-
-private fun linearInterpolate(oldValue: Float, newValue: Float, percentage: Float) =
-    oldValue + (newValue - oldValue) * percentage

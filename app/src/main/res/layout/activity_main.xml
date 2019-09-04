@@ -22,6 +22,22 @@
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
 
+    <tw.lifehackers.widget.EnchantedCharactersView
+            android:id="@+id/enchantedCharactersView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="4dp"
+            android:layout_marginTop="32dp"
+            app:fadeInForNonMovingChar="true"
+            app:typeface="Adlanta.otf"
+            app:text="January"
+            app:textColor="@android:color/black"
+            app:textSize="48sp"
+            app:gravity="center_vertical|center_horizontal"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/enchantedCharactersView"/>
+
     <FrameLayout
             android:id="@+id/container"
             android:layout_width="match_parent"
@@ -30,10 +46,10 @@
             android:layout_marginTop="32dp"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/enchantedCharactersView">
+            app:layout_constraintTop_toBottomOf="@id/enchantedCharactersView2">
 
         <tw.lifehackers.widget.EnchantedCharactersView
-                android:id="@+id/enchantedCharactersView2"
+                android:id="@+id/enchantedCharactersView3"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:padding="4dp"
