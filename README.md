@@ -1,7 +1,7 @@
 # EnchantedCharactersView
 A single line text view. When new text is set, old characters that can be reused shifts to the new position.
 
-<img src="https://landicefu.github.io/EnchantedCharactersView/pic/demo.gif" width=500/>
+<img src="https://landicefu.github.io/EnchantedCharactersView/pic/demo.gif" width=300/>
 
 ## Latest Version
 V1.0 has been released.
