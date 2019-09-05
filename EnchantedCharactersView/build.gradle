@@ -4,6 +4,13 @@ apply plugin: 'kotlin-android'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'com.github.dcendents.android-maven'
 
+// App version
+def versionMajor = 1
+def versionMinor = 1
+
+def verCode = versionMajor * 100 + versionMinor
+def verName = "$versionMajor.$versionMinor"
+
 ext {
     bintrayRepo = 'Open-Source-Public-Maven-Repository'
     bintrayName = 'tw.lifehackers.enchantedcharactersview'
@@ -11,7 +18,7 @@ ext {
     libraryName = 'EnchantedCharactersView'
     publishedGroupId = 'tw.lifehackers'
     artifact = 'enchantedcharactersview'
-    libraryVersion = '1.0'
+    libraryVersion = verName
 
     libraryDescription = 'A single line text view. When new text is set, old characters that can be reused shifts to the new position.'
     siteUrl = 'https://github.com/landicefu/EnchantedCharactersView'
@@ -31,8 +38,8 @@ android {
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
+        versionCode verCode
+        versionName verName
     }
 
     buildTypes {
