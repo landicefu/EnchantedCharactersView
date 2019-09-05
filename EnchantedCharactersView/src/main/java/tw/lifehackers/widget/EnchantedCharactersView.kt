@@ -7,7 +7,6 @@ import android.os.Build
 import android.os.Handler
 import android.text.TextPaint
 import android.util.AttributeSet
-import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity.*
 import android.view.View
@@ -70,6 +69,8 @@ class EnchantedCharactersView : View {
 
     var interpolator: Interpolator? = null
 
+    val duringAnimation: Boolean get() = intermediateState != null
+
     private var isAtMost: Boolean = false
     private val uiHandler = Handler()
 
@@ -126,7 +127,6 @@ class EnchantedCharactersView : View {
             resolveSizeAndState(textWidth.toInt() + paddingLeft + paddingRight, widthMeasureSpec, 0),
             resolveSizeAndState(textPaint.height + paddingBottom + paddingTop, heightMeasureSpec, 0)
         )
-        Log.d("Landice", "measured width = ${textWidth.toInt() + paddingLeft + paddingRight}")
     }
 
     private var intermediateState: IntermediateState? = null
@@ -175,6 +175,7 @@ class EnchantedCharactersView : View {
             interpolator
         )
         requestLayout()
+        invalidate()
     }
 
     private val invalidateRunnable = Runnable { invalidate() }
