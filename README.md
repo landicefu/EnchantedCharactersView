@@ -1,6 +1,6 @@
 # EnchantedCharactersView
 
-![](https://img.shields.io/badge/maven%20central-1.1-green?style=flat-square) ![](https://img.shields.io/badge/jcenter-1.1-green?style=flat-square)
+![](https://img.shields.io/badge/maven%20central-1.1-green?style=plastic) ![](https://img.shields.io/badge/jcenter-1.1-green?style=plastic)
 
 A single line text view. When new text is set, old characters that can be reused shifts to the new position.
 
