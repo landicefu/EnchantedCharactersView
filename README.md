@@ -1,16 +1,19 @@
 # EnchantedCharactersView
+
+![](https://img.shields.io/badge/maven%20central-1.1-green?style=flat-square) ![](https://img.shields.io/badge/jcenter-1.1-green?style=flat-square)
+
 A single line text view. When new text is set, old characters that can be reused shifts to the new position.
 
 <img src="https://landicefu.github.io/EnchantedCharactersView/pic/demo.gif" width=300/>
 
 ## Latest Version
-V1.0 has been released.
+V1.1 has been released.
 - You can now use interpolators to make the animation more vivid.
 
 ## Usage
 Add dependency to your gradle:
 ```
-implementation 'tw.lifehackers:enchantedcharactersview:1.0'
+implementation 'tw.lifehackers:enchantedcharactersview:1.1'
 ```
 
 Add the view to your xml file and change the text in your code.
